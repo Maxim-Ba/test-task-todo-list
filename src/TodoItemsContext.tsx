@@ -16,11 +16,38 @@ export interface TodoItem {
 interface TodoItemsState {
     todoItems: TodoItem[];
 }
-
-interface TodoItemsAction {
-    type: 'loadState' | 'add' | 'delete' | 'toggleDone' | 'reorder';
-    data: any;
+interface loadStateAction{
+    type:'loadState'
+    data: TodoItemsState
 }
+interface addStateAction{
+    type:'add'
+    data: { todoItem: {title: string, details: string} }
+}
+interface deleteStateAction{
+    type:'delete'
+    data: { id: string }
+}
+interface toggleDoneStateAction{
+    type:'toggleDone'
+    data: { id: string }
+}
+interface reorderStateAction{
+    type:'reorder'
+    data: TodoItem[]
+}
+interface editStateAction{
+    type:'edit'
+    data: TodoItem
+}
+
+type TodoItemsAction =
+    reorderStateAction
+    | toggleDoneStateAction
+    | deleteStateAction
+    | addStateAction
+    | loadStateAction
+    | editStateAction
 
 const TodoItemsContext = createContext<
     (TodoItemsState & { dispatch: (action: TodoItemsAction) => void }) | null
@@ -41,7 +68,7 @@ export const TodoItemsContextProvider = ({
 
         if (savedState) {
             try {
-                dispatch({ type: 'loadState', data: JSON.parse(savedState) });
+                dispatch({ type: 'loadState', data: JSON.parse(savedState) as TodoItemsState });
             } catch {}
         }
     }, []);
@@ -69,7 +96,7 @@ export const useTodoItems = () => {
     return todoItemsContext;
 };
 
-function todoItemsReducer(state: TodoItemsState, action: TodoItemsAction) {
+function todoItemsReducer(state: TodoItemsState, action: TodoItemsAction): TodoItemsState {
     switch (action.type) {
         case 'loadState': {
             return action.data;
@@ -109,8 +136,17 @@ function todoItemsReducer(state: TodoItemsState, action: TodoItemsAction) {
                     ...state.todoItems.slice(itemIndex + 1),
                 ],
             };
+            case 'edit':
+                return {
+                ...state,
+                todoItems: [
+                    ...state.todoItems.map(item =>
+                        item.id === action.data.id ? action.data: item
+                    )
+                ],
+            };
         default:
-            throw new Error();
+            return state;
     }
 }
 

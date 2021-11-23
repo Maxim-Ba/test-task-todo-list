@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import Card from '@material-ui/core/Card';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
@@ -12,6 +12,7 @@ import classnames from 'classnames';
 import { motion } from 'framer-motion';
 import { TodoItem, useTodoItems } from './TodoItemsContext';
 import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
+import ModalWindow from './ModalWindow';
 
 const spring = {
     type: 'spring',
@@ -44,7 +45,15 @@ export const TodoItemsList = function () {
         return 0;
     });
 
-    function handleDragEnd(result:DropResult) {
+    const [selectItem, setSelectItem] = useState({id:'' ,title: '',done:false});
+    const [isShowMW, setIsShowMW] = useState(false);
+    const handleDoubleClick = (id:TodoItem)=>{
+        setSelectItem(id);
+        setIsShowMW(true);
+    };
+
+
+    const handleDragEnd =(result:DropResult) => {
         const { source,destination} = result;
         if (!destination) return;
         const items =Array.from(sortedItems);
@@ -52,9 +61,11 @@ export const TodoItemsList = function () {
         items.splice(destination.index, 0, newOrder);
         dispatch({type:'reorder', data:items});
     
-    }
+    };
 
     return (
+        <>
+        {isShowMW && <ModalWindow item={selectItem} callback={setIsShowMW} />}
         <DragDropContext 
         onDragEnd={handleDragEnd}>
 
@@ -74,8 +85,9 @@ export const TodoItemsList = function () {
                                         {...provided.draggableProps}
                                         {...provided.dragHandleProps}
                                     >
+                                        
                                         <motion.li
-
+                                            onDoubleClick={()=>{handleDoubleClick(item);}}
                                             key={item.id}
                                             transition={spring}
                                             layout={true}
@@ -95,6 +107,7 @@ export const TodoItemsList = function () {
             }
         </Droppable>
         </DragDropContext>
+        </>
 
     );
 };
